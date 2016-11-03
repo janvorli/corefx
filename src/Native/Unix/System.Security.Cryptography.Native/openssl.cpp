@@ -13,13 +13,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <openssl/asn1.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
+#include "shim.h"
 
 // See X509NameType.SimpleName
 #define NAME_TYPE_SIMPLE 0
@@ -1015,7 +1009,7 @@ when done with it.
 */
 extern "C" void CryptoNative_RecursiveFreeX509Stack(STACK_OF(X509) * stack)
 {
-    sk_X509_pop_free(stack, X509_free);
+    sk_X509_pop_free(stack, X509_free_ptr);
 }
 
 /*

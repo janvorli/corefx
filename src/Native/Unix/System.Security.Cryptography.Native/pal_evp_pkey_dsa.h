@@ -3,8 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 #include "pal_types.h"
-
-#include <openssl/evp.h>
+#include "shim.h"
 
 /*
 Shims the EVP_PKEY_get1_DSA method.

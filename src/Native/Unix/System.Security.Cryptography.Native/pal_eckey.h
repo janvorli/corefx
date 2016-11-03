@@ -3,8 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 #include "pal_types.h"
-
-#include <openssl/ec.h>
+#include "shim.h"
 
 /*
 Cleans up and deletes an EC_KEY instance.

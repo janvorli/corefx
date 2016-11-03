@@ -17,6 +17,7 @@ include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 set(NATIVECRYPTO_SOURCES
     openssl.cpp
+    shim.cpp
     pal_asn1.cpp
     pal_asn1_print.cpp
     pal_bignum.cpp
@@ -60,13 +61,15 @@ set_target_properties(System.Security.Cryptography.Native PROPERTIES PREFIX "")
 set_target_properties(System.Security.Cryptography.Native.OpenSsl PROPERTIES PREFIX "")
 
 target_link_libraries(System.Security.Cryptography.Native
-  ${OPENSSL_CRYPTO_LIBRARY}
-  ${OPENSSL_SSL_LIBRARY}
+#  ${OPENSSL_CRYPTO_LIBRARY}
+#  ${OPENSSL_SSL_LIBRARY}
+    dl
 )
 
 target_link_libraries(System.Security.Cryptography.Native.OpenSsl
-  ${OPENSSL_CRYPTO_LIBRARY}
-  ${OPENSSL_SSL_LIBRARY}
+#  ${OPENSSL_CRYPTO_LIBRARY}
+#  ${OPENSSL_SSL_LIBRARY}
+    dl
 )
 
 # On OS X every library emits the manner in which it should be referenced.

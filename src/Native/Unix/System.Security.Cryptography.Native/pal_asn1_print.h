@@ -3,8 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 #include "pal_types.h"
-
-#include <openssl/asn1.h>
+#include "shim.h"
 
 /*
 Flags for the 'type' parameter of CryptoNative_DecodeAsn1TypeBytes.

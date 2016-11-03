@@ -49,7 +49,7 @@ extern "C" int32_t CryptoNative_PushX509NameStackField(STACK_OF(X509_NAME) * sta
 
 extern "C" void CryptoNative_RecursiveFreeX509NameStack(STACK_OF(X509_NAME) * stack)
 {
-    sk_X509_NAME_pop_free(stack, X509_NAME_free);
+    sk_X509_NAME_pop_free(stack, X509_NAME_free_ptr);
 }
 
 extern "C" X509_NAME* CryptoNative_DuplicateX509Name(X509_NAME* x509Name)
