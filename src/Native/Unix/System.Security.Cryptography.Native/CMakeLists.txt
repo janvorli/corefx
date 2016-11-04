@@ -17,7 +17,6 @@ include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 set(NATIVECRYPTO_SOURCES
     openssl.cpp
-    shim.cpp
     pal_asn1.cpp
     pal_asn1_print.cpp
     pal_bignum.cpp
@@ -44,6 +43,16 @@ set(NATIVECRYPTO_SOURCES
     pal_x509ext.cpp
 )
 
+if (NOT APPLE)
+    SET(FEATURE_PORTABLE 1)
+endif()
+
+if (FEATURE_PORTABLE)
+    list(APPEND NATIVECRYPTO_SOURCES
+        shim.cpp
+    )
+endif()
+
 add_library(objlib OBJECT ${NATIVECRYPTO_SOURCES} ${VERSION_FILE_PATH})
 
 add_library(System.Security.Cryptography.Native
@@ -60,17 +69,26 @@ add_library(System.Security.Cryptography.Native.OpenSsl
 set_target_properties(System.Security.Cryptography.Native PROPERTIES PREFIX "")
 set_target_properties(System.Security.Cryptography.Native.OpenSsl PROPERTIES PREFIX "")
 
-target_link_libraries(System.Security.Cryptography.Native
-#  ${OPENSSL_CRYPTO_LIBRARY}
-#  ${OPENSSL_SSL_LIBRARY}
-    dl
-)
-
-target_link_libraries(System.Security.Cryptography.Native.OpenSsl
-#  ${OPENSSL_CRYPTO_LIBRARY}
-#  ${OPENSSL_SSL_LIBRARY}
-    dl
-)
+if (FEATURE_PORTABLE)
+    add_definitions(-DFEATURE_PORTABLE)
+    if (NOT CMAKE_SYSTEM_NAME STREQUAL FreeBSD AND NOT CMAKE_SYSTEM_NAME STREQUAL NetBSD)
+        target_link_libraries(System.Security.Cryptography.Native
+            dl
+        )
+        target_link_libraries(System.Security.Cryptography.Native.OpenSsl
+            dl
+        )
+    endif()
+else()
+    target_link_libraries(System.Security.Cryptography.Native
+        ${OPENSSL_CRYPTO_LIBRARY}
+        ${OPENSSL_SSL_LIBRARY}
+    )
+    target_link_libraries(System.Security.Cryptography.Native.OpenSsl
+        ${OPENSSL_CRYPTO_LIBRARY}
+        ${OPENSSL_SSL_LIBRARY}
+    )
+endif()
 
 # On OS X every library emits the manner in which it should be referenced.
 # All of our libraries are referenced via @rpath, which is similar to how Linux and Windows

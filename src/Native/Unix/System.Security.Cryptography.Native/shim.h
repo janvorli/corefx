@@ -3,13 +3,14 @@
 // See the LICENSE file in the project root for more information.
 //
 
-// Enable calling ICU functions through shims to enable support for 
-// multiple versions of ICU if the FEATURE_FIXED_ICU_VERSION is
-// not defined.
+// Enable calling openssl functions through shims to allow using the 
+// same System.Security.Cryptography.Native.so on all glibc based
+// Linux distros.
 
 #ifndef __SHIM_H__
 #define __SHIM_H__
 
+// All OpenSSL headers must be included only here
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
@@ -31,566 +32,296 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-// List of all functions from the libssl and libcrypto that are used in the 
-#define FOR_ALL_FUNCTIONS \
-	PER_FUNCTION_BLOCK(ASN1_BIT_STRING_free, libssl) \
-	PER_FUNCTION_BLOCK(ASN1_INTEGER_get, libssl) \
-	PER_FUNCTION_BLOCK(ASN1_OBJECT_free, libssl) \
-	PER_FUNCTION_BLOCK(ASN1_OCTET_STRING_free, libssl) \
-	PER_FUNCTION_BLOCK(ASN1_OCTET_STRING_new, libssl) \
-	PER_FUNCTION_BLOCK(ASN1_OCTET_STRING_set, libssl) \
-	PER_FUNCTION_BLOCK(ASN1_STRING_free, libssl) \
-	PER_FUNCTION_BLOCK(ASN1_STRING_print_ex, libssl) \
-	PER_FUNCTION_BLOCK(BASIC_CONSTRAINTS_free, libssl) \
-	PER_FUNCTION_BLOCK(BIO_ctrl, libssl) \
-	PER_FUNCTION_BLOCK(BIO_ctrl_pending, libssl) \
-	PER_FUNCTION_BLOCK(BIO_free, libssl) \
-	PER_FUNCTION_BLOCK(BIO_gets, libssl) \
-	PER_FUNCTION_BLOCK(BIO_new, libssl) \
-	PER_FUNCTION_BLOCK(BIO_new_file, libssl) \
-	PER_FUNCTION_BLOCK(BIO_read, libssl) \
-	PER_FUNCTION_BLOCK(BIO_s_mem, libssl) \
-	PER_FUNCTION_BLOCK(BIO_write, libssl) \
-	PER_FUNCTION_BLOCK(BN_bin2bn, libssl) \
-	PER_FUNCTION_BLOCK(BN_bn2bin, libssl) \
-	PER_FUNCTION_BLOCK(BN_clear_free, libssl) \
-	PER_FUNCTION_BLOCK(BN_free, libssl) \
-	PER_FUNCTION_BLOCK(BN_new, libssl) \
-	PER_FUNCTION_BLOCK(BN_num_bits, libssl) \
-	PER_FUNCTION_BLOCK(CRYPTO_add_lock, libssl) \
-	PER_FUNCTION_BLOCK(CRYPTO_num_locks, libssl) \
-	PER_FUNCTION_BLOCK(CRYPTO_set_locking_callback, libssl) \
-	PER_FUNCTION_BLOCK(d2i_ASN1_BIT_STRING, libssl) \
-	PER_FUNCTION_BLOCK(d2i_ASN1_OCTET_STRING, libssl) \
-	PER_FUNCTION_BLOCK(d2i_ASN1_type_bytes, libssl) \
-	PER_FUNCTION_BLOCK(d2i_BASIC_CONSTRAINTS, libssl) \
-	PER_FUNCTION_BLOCK(d2i_EXTENDED_KEY_USAGE, libssl) \
-	PER_FUNCTION_BLOCK(d2i_PKCS12, libssl) \
-	PER_FUNCTION_BLOCK(d2i_PKCS12_bio, libssl) \
-	PER_FUNCTION_BLOCK(d2i_PKCS7, libssl) \
-	PER_FUNCTION_BLOCK(d2i_PKCS7_bio, libssl) \
-	PER_FUNCTION_BLOCK(d2i_RSAPublicKey, libssl) \
-	PER_FUNCTION_BLOCK(d2i_X509, libssl) \
-	PER_FUNCTION_BLOCK(d2i_X509_bio, libssl) \
-	PER_FUNCTION_BLOCK(d2i_X509_CRL, libssl) \
-	PER_FUNCTION_BLOCK(d2i_X509_NAME, libssl) \
-	PER_FUNCTION_BLOCK(DSA_free, libssl) \
-	PER_FUNCTION_BLOCK(DSA_generate_key, libssl) \
-	PER_FUNCTION_BLOCK(DSA_generate_parameters_ex, libssl) \
-	PER_FUNCTION_BLOCK(DSA_new, libssl) \
-	PER_FUNCTION_BLOCK(DSA_sign, libssl) \
-	PER_FUNCTION_BLOCK(DSA_size, libssl) \
-	PER_FUNCTION_BLOCK(DSA_up_ref, libssl) \
-	PER_FUNCTION_BLOCK(DSA_verify, libssl) \
-	PER_FUNCTION_BLOCK(ECDSA_sign, libssl) \
-	PER_FUNCTION_BLOCK(ECDSA_size, libssl) \
-	PER_FUNCTION_BLOCK(ECDSA_verify, libssl) \
-	PER_FUNCTION_BLOCK(EC_GF2m_simple_method, libssl) \
-	PER_FUNCTION_BLOCK(EC_GFp_mont_method, libssl) \
-	PER_FUNCTION_BLOCK(EC_GFp_simple_method, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_check, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_free, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get0_generator, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get0_seed, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get_cofactor, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get_curve_GF2m, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get_curve_GFp, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get_curve_name, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get_degree, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get_order, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_get_seed_len, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_method_of, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_new, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_set_curve_GF2m, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_set_curve_GFp, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_set_generator, libssl) \
-	PER_FUNCTION_BLOCK(EC_GROUP_set_seed, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_check_key, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_free, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_generate_key, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_get0_group, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_get0_private_key, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_get0_public_key, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_new, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_new_by_curve_name, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_set_group, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_set_private_key, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_set_public_key_affine_coordinates, libssl) \
-	PER_FUNCTION_BLOCK(EC_KEY_up_ref, libssl) \
-	PER_FUNCTION_BLOCK(EC_METHOD_get_field_type, libssl) \
-	PER_FUNCTION_BLOCK(EC_POINT_free, libssl) \
-	PER_FUNCTION_BLOCK(EC_POINT_get_affine_coordinates_GF2m, libssl) \
-	PER_FUNCTION_BLOCK(EC_POINT_get_affine_coordinates_GFp, libssl) \
-	PER_FUNCTION_BLOCK(EC_POINT_new, libssl) \
-	PER_FUNCTION_BLOCK(EC_POINT_set_affine_coordinates_GF2m, libssl) \
-	PER_FUNCTION_BLOCK(EC_POINT_set_affine_coordinates_GFp, libssl) \
-	PER_FUNCTION_BLOCK(ERR_clear_error, libssl) \
-	PER_FUNCTION_BLOCK(ERR_error_string_n, libssl) \
-	PER_FUNCTION_BLOCK(ERR_get_error, libssl) \
-	PER_FUNCTION_BLOCK(ERR_load_crypto_strings, libssl) \
-	PER_FUNCTION_BLOCK(ERR_peek_error, libssl) \
-	PER_FUNCTION_BLOCK(ERR_peek_last_error, libssl) \
-	PER_FUNCTION_BLOCK(ERR_reason_error_string, libssl) \
-	PER_FUNCTION_BLOCK(EVP_aes_128_cbc, libssl) \
-	PER_FUNCTION_BLOCK(EVP_aes_128_ecb, libssl) \
-	PER_FUNCTION_BLOCK(EVP_aes_192_cbc, libssl) \
-	PER_FUNCTION_BLOCK(EVP_aes_192_ecb, libssl) \
-	PER_FUNCTION_BLOCK(EVP_aes_256_cbc, libssl) \
-	PER_FUNCTION_BLOCK(EVP_aes_256_ecb, libssl) \
-	PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_cleanup, libssl) \
-	PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_ctrl, libssl) \
-	PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_init, libssl) \
-	PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_set_key_length, libssl) \
-	PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_set_padding, libssl) \
-	PER_FUNCTION_BLOCK(EVP_CipherFinal_ex, libssl) \
-	PER_FUNCTION_BLOCK(EVP_CipherInit_ex, libssl) \
-	PER_FUNCTION_BLOCK(EVP_CipherUpdate, libssl) \
-	PER_FUNCTION_BLOCK(EVP_des_cbc, libssl) \
-	PER_FUNCTION_BLOCK(EVP_des_ecb, libssl) \
-	PER_FUNCTION_BLOCK(EVP_des_ede3, libssl) \
-	PER_FUNCTION_BLOCK(EVP_des_ede3_cbc, libssl) \
-	PER_FUNCTION_BLOCK(EVP_DigestFinal_ex, libssl) \
-	PER_FUNCTION_BLOCK(EVP_DigestInit_ex, libssl) \
-	PER_FUNCTION_BLOCK(EVP_DigestUpdate, libssl) \
-	PER_FUNCTION_BLOCK(EVP_md5, libssl) \
-	PER_FUNCTION_BLOCK(EVP_MD_CTX_create, libssl) \
-	PER_FUNCTION_BLOCK(EVP_MD_CTX_destroy, libssl) \
-	PER_FUNCTION_BLOCK(EVP_MD_size, libssl) \
-	PER_FUNCTION_BLOCK(EVP_PKEY_free, libssl) \
-	PER_FUNCTION_BLOCK(EVP_PKEY_get1_DSA, libssl) \
-	PER_FUNCTION_BLOCK(EVP_PKEY_get1_EC_KEY, libssl) \
-	PER_FUNCTION_BLOCK(EVP_PKEY_get1_RSA, libssl) \
-	PER_FUNCTION_BLOCK(EVP_PKEY_new, libssl) \
-	PER_FUNCTION_BLOCK(EVP_PKEY_set1_DSA, libssl) \
-	PER_FUNCTION_BLOCK(EVP_PKEY_set1_EC_KEY, libssl) \
-	PER_FUNCTION_BLOCK(EVP_PKEY_set1_RSA, libssl) \
-	PER_FUNCTION_BLOCK(EVP_rc2_cbc, libssl) \
-	PER_FUNCTION_BLOCK(EVP_rc2_ecb, libssl) \
-	PER_FUNCTION_BLOCK(EVP_sha1, libssl) \
-	PER_FUNCTION_BLOCK(EVP_sha256, libssl) \
-	PER_FUNCTION_BLOCK(EVP_sha384, libssl) \
-	PER_FUNCTION_BLOCK(EVP_sha512, libssl) \
-	PER_FUNCTION_BLOCK(EXTENDED_KEY_USAGE_free, libssl) \
-	PER_FUNCTION_BLOCK(GENERAL_NAMES_free, libssl) \
-	PER_FUNCTION_BLOCK(HMAC_CTX_cleanup, libssl) \
-	PER_FUNCTION_BLOCK(HMAC_CTX_init, libssl) \
-	PER_FUNCTION_BLOCK(HMAC_Final, libssl) \
-	PER_FUNCTION_BLOCK(HMAC_Init_ex, libssl) \
-	PER_FUNCTION_BLOCK(HMAC_Update, libssl) \
-	PER_FUNCTION_BLOCK(i2d_ASN1_INTEGER, libssl) \
-	PER_FUNCTION_BLOCK(i2d_ASN1_TYPE, libssl) \
-	PER_FUNCTION_BLOCK(i2d_PKCS12, libssl) \
-	PER_FUNCTION_BLOCK(i2d_PKCS7, libssl) \
-	PER_FUNCTION_BLOCK(i2d_X509, libssl) \
-	PER_FUNCTION_BLOCK(i2d_X509_PUBKEY, libssl) \
-	PER_FUNCTION_BLOCK(OBJ_ln2nid, libssl) \
-	PER_FUNCTION_BLOCK(OBJ_nid2ln, libssl) \
-	PER_FUNCTION_BLOCK(OBJ_nid2obj, libssl) \
-	PER_FUNCTION_BLOCK(OBJ_obj2nid, libssl) \
-	PER_FUNCTION_BLOCK(OBJ_obj2txt, libssl) \
-	PER_FUNCTION_BLOCK(OBJ_sn2nid, libssl) \
-	PER_FUNCTION_BLOCK(OBJ_txt2nid, libssl) \
-	PER_FUNCTION_BLOCK(OBJ_txt2obj, libssl) \
-	PER_FUNCTION_BLOCK(OPENSSL_add_all_algorithms_conf, libssl) \
-	PER_FUNCTION_BLOCK(PEM_read_bio_PKCS7, libssl) \
-	PER_FUNCTION_BLOCK(PEM_read_bio_X509_AUX, libssl) \
-	PER_FUNCTION_BLOCK(PEM_read_bio_X509_CRL, libssl) \
-	PER_FUNCTION_BLOCK(PEM_write_bio_X509_CRL, libssl) \
-	PER_FUNCTION_BLOCK(PKCS12_create, libssl) \
-	PER_FUNCTION_BLOCK(PKCS12_free, libssl) \
-	PER_FUNCTION_BLOCK(PKCS12_parse, libssl) \
-	PER_FUNCTION_BLOCK(PKCS7_add_certificate, libssl) \
-	PER_FUNCTION_BLOCK(PKCS7_content_new, libssl) \
-	PER_FUNCTION_BLOCK(PKCS7_free, libssl) \
-	PER_FUNCTION_BLOCK(PKCS7_new, libssl) \
-	PER_FUNCTION_BLOCK(PKCS7_set_type, libssl) \
-	PER_FUNCTION_BLOCK(RAND_bytes, libssl) \
-	PER_FUNCTION_BLOCK(RAND_poll, libssl) \
-	PER_FUNCTION_BLOCK(RSA_free, libssl) \
-	PER_FUNCTION_BLOCK(RSA_generate_key_ex, libssl) \
-	PER_FUNCTION_BLOCK(RSA_new, libssl) \
-	PER_FUNCTION_BLOCK(RSA_private_decrypt, libssl) \
-	PER_FUNCTION_BLOCK(RSA_public_encrypt, libssl) \
-	PER_FUNCTION_BLOCK(RSA_sign, libssl) \
-	PER_FUNCTION_BLOCK(RSA_size, libssl) \
-	PER_FUNCTION_BLOCK(RSA_up_ref, libssl) \
-	PER_FUNCTION_BLOCK(RSA_verify, libssl) \
-	PER_FUNCTION_BLOCK(sk_free, libssl) \
-	PER_FUNCTION_BLOCK(sk_new_null, libssl) \
-	PER_FUNCTION_BLOCK(sk_num, libssl) \
-	PER_FUNCTION_BLOCK(sk_pop_free, libssl) \
-	PER_FUNCTION_BLOCK(sk_push, libssl) \
-	PER_FUNCTION_BLOCK(sk_value, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CIPHER_description, libssl) \
-	PER_FUNCTION_BLOCK(SSL_ctrl, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_check_private_key, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_ctrl, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_free, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_new, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_set_cert_verify_callback, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_set_cipher_list, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_set_client_CA_list, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_set_client_cert_cb, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_set_quiet_shutdown, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_set_verify, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_use_certificate, libssl) \
-	PER_FUNCTION_BLOCK(SSL_CTX_use_PrivateKey, libssl) \
-	PER_FUNCTION_BLOCK(SSL_do_handshake, libssl) \
-	PER_FUNCTION_BLOCK(SSL_free, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_client_CA_list, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_current_cipher, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_error, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_finished, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_peer_cert_chain, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_peer_certificate, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_peer_finished, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_SSL_CTX, libssl) \
-	PER_FUNCTION_BLOCK(SSL_get_version, libssl) \
-	PER_FUNCTION_BLOCK(SSL_library_init, libssl) \
-	PER_FUNCTION_BLOCK(SSL_load_error_strings, libssl) \
-	PER_FUNCTION_BLOCK(SSL_new, libssl) \
-	PER_FUNCTION_BLOCK(SSL_read, libssl) \
-	PER_FUNCTION_BLOCK(SSL_renegotiate_pending, libssl) \
-	PER_FUNCTION_BLOCK(SSL_set_accept_state, libssl) \
-	PER_FUNCTION_BLOCK(SSL_set_bio, libssl) \
-	PER_FUNCTION_BLOCK(SSL_set_connect_state, libssl) \
-	PER_FUNCTION_BLOCK(SSL_shutdown, libssl) \
-	PER_FUNCTION_BLOCK(SSL_state, libssl) \
-	PER_FUNCTION_BLOCK(SSLv23_method, libssl) \
-	PER_FUNCTION_BLOCK(SSLv3_method, libssl) \
-	PER_FUNCTION_BLOCK(SSL_write, libssl) \
-	PER_FUNCTION_BLOCK(TLSv1_1_method, libssl) \
-	PER_FUNCTION_BLOCK(TLSv1_2_method, libssl) \
-	PER_FUNCTION_BLOCK(TLSv1_method, libssl) \
-	PER_FUNCTION_BLOCK(X509_check_issued, libssl) \
-	PER_FUNCTION_BLOCK(X509_check_purpose, libssl) \
-	PER_FUNCTION_BLOCK(X509_CRL_free, libssl) \
-	PER_FUNCTION_BLOCK(X509_dup, libssl) \
-	PER_FUNCTION_BLOCK(X509_EXTENSION_create_by_OBJ, libssl) \
-	PER_FUNCTION_BLOCK(X509_EXTENSION_free, libssl) \
-	PER_FUNCTION_BLOCK(X509_EXTENSION_get_critical, libssl) \
-	PER_FUNCTION_BLOCK(X509_EXTENSION_get_data, libssl) \
-	PER_FUNCTION_BLOCK(X509_EXTENSION_get_object, libssl) \
-	PER_FUNCTION_BLOCK(X509_free, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_default_cert_dir, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_default_cert_dir_env, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_default_cert_file, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_default_cert_file_env, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_ext, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_ext_count, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_ext_d2i, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_issuer_name, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_serialNumber, libssl) \
-	PER_FUNCTION_BLOCK(X509_get_subject_name, libssl) \
-	PER_FUNCTION_BLOCK(X509_issuer_name_hash, libssl) \
-	PER_FUNCTION_BLOCK(X509_NAME_dup, libssl) \
-	PER_FUNCTION_BLOCK(X509_NAME_entry_count, libssl) \
-	PER_FUNCTION_BLOCK(X509_NAME_ENTRY_get_data, libssl) \
-	PER_FUNCTION_BLOCK(X509_NAME_ENTRY_get_object, libssl) \
-	PER_FUNCTION_BLOCK(X509_NAME_free, libssl) \
-	PER_FUNCTION_BLOCK(X509_NAME_get_entry, libssl) \
-	PER_FUNCTION_BLOCK(X509_NAME_get_index_by_NID, libssl) \
-	PER_FUNCTION_BLOCK(X509_PUBKEY_get, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_add_cert, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_add_crl, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_CTX_free, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_CTX_get0_param, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_CTX_get1_chain, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_CTX_get_error, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_CTX_get_error_depth, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_CTX_init, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_CTX_new, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_CTX_set_verify_cb, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_free, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_new, libssl) \
-	PER_FUNCTION_BLOCK(X509_STORE_set_flags, libssl) \
-	PER_FUNCTION_BLOCK(X509V3_EXT_print, libssl) \
-	PER_FUNCTION_BLOCK(X509_verify_cert, libssl) \
-	PER_FUNCTION_BLOCK(X509_verify_cert_error_string, libssl) \
-	PER_FUNCTION_BLOCK(X509_VERIFY_PARAM_set_time, libssl) \
+#ifdef FEATURE_PORTABLE
 
-// Declare pointers to all the used libssl and libcrypto functions
-#define PER_FUNCTION_BLOCK(fn, lib) extern decltype(fn)* fn##_ptr;
+#define OPTIONAL true
+#define REQUIRED false
+
+// List of all functions from the libssl that are used in the System.Security.Cryptography.Native.so
+#define FOR_ALL_FUNCTIONS \
+    PER_FUNCTION_BLOCK(ASN1_BIT_STRING_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(ASN1_INTEGER_get, REQUIRED) \
+    PER_FUNCTION_BLOCK(ASN1_OBJECT_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(ASN1_OCTET_STRING_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(ASN1_OCTET_STRING_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(ASN1_OCTET_STRING_set, REQUIRED) \
+    PER_FUNCTION_BLOCK(ASN1_STRING_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(ASN1_STRING_print_ex, REQUIRED) \
+    PER_FUNCTION_BLOCK(BASIC_CONSTRAINTS_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_ctrl, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_ctrl_pending, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_gets, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_new_file, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_read, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_s_mem, REQUIRED) \
+    PER_FUNCTION_BLOCK(BIO_write, REQUIRED) \
+    PER_FUNCTION_BLOCK(BN_bin2bn, REQUIRED) \
+    PER_FUNCTION_BLOCK(BN_bn2bin, REQUIRED) \
+    PER_FUNCTION_BLOCK(BN_clear_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(BN_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(BN_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(BN_num_bits, REQUIRED) \
+    PER_FUNCTION_BLOCK(CRYPTO_add_lock, REQUIRED) \
+    PER_FUNCTION_BLOCK(CRYPTO_num_locks, REQUIRED) \
+    PER_FUNCTION_BLOCK(CRYPTO_set_locking_callback, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_ASN1_BIT_STRING, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_ASN1_OCTET_STRING, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_ASN1_type_bytes, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_BASIC_CONSTRAINTS, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_EXTENDED_KEY_USAGE, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_PKCS12, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_PKCS12_bio, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_PKCS7, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_PKCS7_bio, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_RSAPublicKey, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_X509, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_X509_bio, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_X509_CRL, REQUIRED) \
+    PER_FUNCTION_BLOCK(d2i_X509_NAME, REQUIRED) \
+    PER_FUNCTION_BLOCK(DSA_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(DSA_generate_key, REQUIRED) \
+    PER_FUNCTION_BLOCK(DSA_generate_parameters_ex, REQUIRED) \
+    PER_FUNCTION_BLOCK(DSA_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(DSA_sign, REQUIRED) \
+    PER_FUNCTION_BLOCK(DSA_size, REQUIRED) \
+    PER_FUNCTION_BLOCK(DSA_up_ref, REQUIRED) \
+    PER_FUNCTION_BLOCK(DSA_verify, REQUIRED) \
+    PER_FUNCTION_BLOCK(ECDSA_sign, REQUIRED) \
+    PER_FUNCTION_BLOCK(ECDSA_size, REQUIRED) \
+    PER_FUNCTION_BLOCK(ECDSA_verify, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GF2m_simple_method, OPTIONAL) \
+    PER_FUNCTION_BLOCK(EC_GFp_mont_method, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GFp_simple_method, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_check, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get0_generator, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get0_seed, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get_cofactor, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get_curve_GF2m, OPTIONAL) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get_curve_GFp, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get_curve_name, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get_degree, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get_order, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_get_seed_len, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_method_of, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_set_curve_GF2m, OPTIONAL) \
+    PER_FUNCTION_BLOCK(EC_GROUP_set_curve_GFp, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_set_generator, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_GROUP_set_seed, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_check_key, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_generate_key, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_get0_group, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_get0_private_key, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_get0_public_key, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_new_by_curve_name, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_set_group, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_set_private_key, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_set_public_key_affine_coordinates, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_KEY_up_ref, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_METHOD_get_field_type, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_POINT_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_POINT_get_affine_coordinates_GF2m, OPTIONAL) \
+    PER_FUNCTION_BLOCK(EC_POINT_get_affine_coordinates_GFp, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_POINT_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(EC_POINT_set_affine_coordinates_GF2m, OPTIONAL) \
+    PER_FUNCTION_BLOCK(EC_POINT_set_affine_coordinates_GFp, REQUIRED) \
+    PER_FUNCTION_BLOCK(ERR_clear_error, REQUIRED) \
+    PER_FUNCTION_BLOCK(ERR_error_string_n, REQUIRED) \
+    PER_FUNCTION_BLOCK(ERR_get_error, REQUIRED) \
+    PER_FUNCTION_BLOCK(ERR_load_crypto_strings, REQUIRED) \
+    PER_FUNCTION_BLOCK(ERR_peek_error, REQUIRED) \
+    PER_FUNCTION_BLOCK(ERR_peek_last_error, REQUIRED) \
+    PER_FUNCTION_BLOCK(ERR_reason_error_string, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_aes_128_cbc, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_aes_128_ecb, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_aes_192_cbc, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_aes_192_ecb, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_aes_256_cbc, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_aes_256_ecb, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_cleanup, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_ctrl, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_init, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_set_key_length, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_CIPHER_CTX_set_padding, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_CipherFinal_ex, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_CipherInit_ex, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_CipherUpdate, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_des_cbc, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_des_ecb, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_des_ede3, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_des_ede3_cbc, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_DigestFinal_ex, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_DigestInit_ex, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_DigestUpdate, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_md5, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_MD_CTX_create, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_MD_CTX_destroy, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_MD_size, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_PKEY_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_PKEY_get1_DSA, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_PKEY_get1_EC_KEY, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_PKEY_get1_RSA, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_PKEY_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_PKEY_set1_DSA, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_PKEY_set1_EC_KEY, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_PKEY_set1_RSA, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_rc2_cbc, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_rc2_ecb, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_sha1, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_sha256, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_sha384, REQUIRED) \
+    PER_FUNCTION_BLOCK(EVP_sha512, REQUIRED) \
+    PER_FUNCTION_BLOCK(EXTENDED_KEY_USAGE_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(GENERAL_NAMES_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(HMAC_CTX_cleanup, REQUIRED) \
+    PER_FUNCTION_BLOCK(HMAC_CTX_init, REQUIRED) \
+    PER_FUNCTION_BLOCK(HMAC_Final, REQUIRED) \
+    PER_FUNCTION_BLOCK(HMAC_Init_ex, REQUIRED) \
+    PER_FUNCTION_BLOCK(HMAC_Update, REQUIRED) \
+    PER_FUNCTION_BLOCK(i2d_ASN1_INTEGER, REQUIRED) \
+    PER_FUNCTION_BLOCK(i2d_ASN1_TYPE, REQUIRED) \
+    PER_FUNCTION_BLOCK(i2d_PKCS12, REQUIRED) \
+    PER_FUNCTION_BLOCK(i2d_PKCS7, REQUIRED) \
+    PER_FUNCTION_BLOCK(i2d_X509, REQUIRED) \
+    PER_FUNCTION_BLOCK(i2d_X509_PUBKEY, REQUIRED) \
+    PER_FUNCTION_BLOCK(OBJ_ln2nid, REQUIRED) \
+    PER_FUNCTION_BLOCK(OBJ_nid2ln, REQUIRED) \
+    PER_FUNCTION_BLOCK(OBJ_nid2obj, REQUIRED) \
+    PER_FUNCTION_BLOCK(OBJ_obj2nid, REQUIRED) \
+    PER_FUNCTION_BLOCK(OBJ_obj2txt, REQUIRED) \
+    PER_FUNCTION_BLOCK(OBJ_sn2nid, REQUIRED) \
+    PER_FUNCTION_BLOCK(OBJ_txt2nid, REQUIRED) \
+    PER_FUNCTION_BLOCK(OBJ_txt2obj, REQUIRED) \
+    PER_FUNCTION_BLOCK(OPENSSL_add_all_algorithms_conf, REQUIRED) \
+    PER_FUNCTION_BLOCK(PEM_read_bio_PKCS7, REQUIRED) \
+    PER_FUNCTION_BLOCK(PEM_read_bio_X509_AUX, REQUIRED) \
+    PER_FUNCTION_BLOCK(PEM_read_bio_X509_CRL, REQUIRED) \
+    PER_FUNCTION_BLOCK(PEM_write_bio_X509_CRL, REQUIRED) \
+    PER_FUNCTION_BLOCK(PKCS12_create, REQUIRED) \
+    PER_FUNCTION_BLOCK(PKCS12_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(PKCS12_parse, REQUIRED) \
+    PER_FUNCTION_BLOCK(PKCS7_add_certificate, REQUIRED) \
+    PER_FUNCTION_BLOCK(PKCS7_content_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(PKCS7_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(PKCS7_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(PKCS7_set_type, REQUIRED) \
+    PER_FUNCTION_BLOCK(RAND_bytes, REQUIRED) \
+    PER_FUNCTION_BLOCK(RAND_poll, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_generate_key_ex, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_private_decrypt, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_public_encrypt, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_sign, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_size, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_up_ref, REQUIRED) \
+    PER_FUNCTION_BLOCK(RSA_verify, REQUIRED) \
+    PER_FUNCTION_BLOCK(sk_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(sk_new_null, REQUIRED) \
+    PER_FUNCTION_BLOCK(sk_num, REQUIRED) \
+    PER_FUNCTION_BLOCK(sk_pop_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(sk_push, REQUIRED) \
+    PER_FUNCTION_BLOCK(sk_value, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CIPHER_description, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_ctrl, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_check_private_key, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_ctrl, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_set_cert_verify_callback, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_set_cipher_list, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_set_client_CA_list, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_set_client_cert_cb, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_set_quiet_shutdown, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_set_verify, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_use_certificate, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_CTX_use_PrivateKey, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_do_handshake, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_client_CA_list, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_current_cipher, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_error, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_finished, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_peer_cert_chain, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_peer_certificate, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_peer_finished, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_SSL_CTX, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_get_version, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_library_init, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_load_error_strings, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_read, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_renegotiate_pending, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_set_accept_state, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_set_bio, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_set_connect_state, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_shutdown, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_state, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSLv23_method, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSLv3_method, REQUIRED) \
+    PER_FUNCTION_BLOCK(SSL_write, REQUIRED) \
+    PER_FUNCTION_BLOCK(TLSv1_1_method, REQUIRED) \
+    PER_FUNCTION_BLOCK(TLSv1_2_method, REQUIRED) \
+    PER_FUNCTION_BLOCK(TLSv1_method, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_check_issued, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_check_purpose, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_CRL_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_dup, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_EXTENSION_create_by_OBJ, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_EXTENSION_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_EXTENSION_get_critical, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_EXTENSION_get_data, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_EXTENSION_get_object, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_default_cert_dir, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_default_cert_dir_env, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_default_cert_file, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_default_cert_file_env, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_ext, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_ext_count, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_ext_d2i, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_issuer_name, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_serialNumber, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_get_subject_name, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_issuer_name_hash, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_NAME_dup, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_NAME_entry_count, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_NAME_ENTRY_get_data, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_NAME_ENTRY_get_object, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_NAME_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_NAME_get_entry, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_NAME_get_index_by_NID, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_PUBKEY_get, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_add_cert, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_add_crl, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_CTX_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_CTX_get0_param, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_CTX_get1_chain, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_CTX_get_error, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_CTX_get_error_depth, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_CTX_init, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_CTX_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_CTX_set_verify_cb, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_free, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_new, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_STORE_set_flags, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509V3_EXT_print, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_verify_cert, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_verify_cert_error_string, REQUIRED) \
+    PER_FUNCTION_BLOCK(X509_VERIFY_PARAM_set_time, REQUIRED) \
+
+// Declare pointers to all the used libssl functions
+#define PER_FUNCTION_BLOCK(fn, optional) extern decltype(fn)* fn##_ptr;
 FOR_ALL_FUNCTIONS
 #undef PER_FUNCTION_BLOCK
-#if 0
-#define ASN1_BIT_STRING_free(...) ASN1_BIT_STRING_free_ptr(__VA_ARGS__)
-#define ASN1_INTEGER_get(...) ASN1_INTEGER_get_ptr(__VA_ARGS__)
-#define ASN1_OBJECT_free(...) ASN1_OBJECT_free_ptr(__VA_ARGS__)
-#define ASN1_OCTET_STRING_free(...) ASN1_OCTET_STRING_free_ptr(__VA_ARGS__)
-#define ASN1_OCTET_STRING_new(...) ASN1_OCTET_STRING_new_ptr(__VA_ARGS__)
-#define ASN1_OCTET_STRING_set(...) ASN1_OCTET_STRING_set_ptr(__VA_ARGS__)
-#define ASN1_STRING_free(...) ASN1_STRING_free_ptr(__VA_ARGS__)
-#define ASN1_STRING_print_ex(...) ASN1_STRING_print_ex_ptr(__VA_ARGS__)
-#define BASIC_CONSTRAINTS_free(...) BASIC_CONSTRAINTS_free_ptr(__VA_ARGS__)
-#define BIO_ctrl(...) BIO_ctrl_ptr(__VA_ARGS__)
-#define BIO_ctrl_pending(...) BIO_ctrl_pending_ptr(__VA_ARGS__)
-#define BIO_free(...) BIO_free_ptr(__VA_ARGS__)
-#define BIO_gets(...) BIO_gets_ptr(__VA_ARGS__)
-#define BIO_new(...) BIO_new_ptr(__VA_ARGS__)
-#define BIO_new_file(...) BIO_new_file_ptr(__VA_ARGS__)
-#define BIO_read(...) BIO_read_ptr(__VA_ARGS__)
-#define BIO_s_mem(...) BIO_s_mem_ptr(__VA_ARGS__)
-#define BIO_write(...) BIO_write_ptr(__VA_ARGS__)
-#define BN_bin2bn(...) BN_bin2bn_ptr(__VA_ARGS__)
-#define BN_bn2bin(...) BN_bn2bin_ptr(__VA_ARGS__)
-#define BN_clear_free(...) BN_clear_free_ptr(__VA_ARGS__)
-#define BN_free(...) BN_free_ptr(__VA_ARGS__)
-#define BN_new(...) BN_new_ptr(__VA_ARGS__)
-#define BN_num_bits(...) BN_num_bits_ptr(__VA_ARGS__)
-#define CRYPTO_add_lock(...) CRYPTO_add_lock_ptr(__VA_ARGS__)
-#define CRYPTO_num_locks(...) CRYPTO_num_locks_ptr(__VA_ARGS__)
-#define CRYPTO_set_locking_callback(...) CRYPTO_set_locking_callback_ptr(__VA_ARGS__)
-#define d2i_ASN1_BIT_STRING(...) d2i_ASN1_BIT_STRING_ptr(__VA_ARGS__)
-#define d2i_ASN1_OCTET_STRING(...) d2i_ASN1_OCTET_STRING_ptr(__VA_ARGS__)
-#define d2i_ASN1_type_bytes(...) d2i_ASN1_type_bytes_ptr(__VA_ARGS__)
-#define d2i_BASIC_CONSTRAINTS(...) d2i_BASIC_CONSTRAINTS_ptr(__VA_ARGS__)
-#define d2i_EXTENDED_KEY_USAGE(...) d2i_EXTENDED_KEY_USAGE_ptr(__VA_ARGS__)
-#define d2i_PKCS12(...) d2i_PKCS12_ptr(__VA_ARGS__)
-#define d2i_PKCS12_bio(...) d2i_PKCS12_bio_ptr(__VA_ARGS__)
-#define d2i_PKCS7(...) d2i_PKCS7_ptr(__VA_ARGS__)
-#define d2i_PKCS7_bio(...) d2i_PKCS7_bio_ptr(__VA_ARGS__)
-#define d2i_RSAPublicKey(...) d2i_RSAPublicKey_ptr(__VA_ARGS__)
-#define d2i_X509(...) d2i_X509_ptr(__VA_ARGS__)
-#define d2i_X509_bio(...) d2i_X509_bio_ptr(__VA_ARGS__)
-#define d2i_X509_CRL(...) d2i_X509_CRL_ptr(__VA_ARGS__)
-#define d2i_X509_NAME(...) d2i_X509_NAME_ptr(__VA_ARGS__)
-#define DSA_free(...) DSA_free_ptr(__VA_ARGS__)
-#define DSA_generate_key(...) DSA_generate_key_ptr(__VA_ARGS__)
-#define DSA_generate_parameters_ex(...) DSA_generate_parameters_ex_ptr(__VA_ARGS__)
-#define DSA_new(...) DSA_new_ptr(__VA_ARGS__)
-#define DSA_sign(...) DSA_sign_ptr(__VA_ARGS__)
-#define DSA_size(...) DSA_size_ptr(__VA_ARGS__)
-#define DSA_up_ref(...) DSA_up_ref_ptr(__VA_ARGS__)
-#define DSA_verify(...) DSA_verify_ptr(__VA_ARGS__)
-#define ECDSA_sign(...) ECDSA_sign_ptr(__VA_ARGS__)
-#define ECDSA_size(...) ECDSA_size_ptr(__VA_ARGS__)
-#define ECDSA_verify(...) ECDSA_verify_ptr(__VA_ARGS__)
-#define EC_GF2m_simple_method(...) EC_GF2m_simple_method_ptr(__VA_ARGS__)
-#define EC_GFp_mont_method(...) EC_GFp_mont_method_ptr(__VA_ARGS__)
-#define EC_GFp_simple_method(...) EC_GFp_simple_method_ptr(__VA_ARGS__)
-#define EC_GROUP_check(...) EC_GROUP_check_ptr(__VA_ARGS__)
-#define EC_GROUP_free(...) EC_GROUP_free_ptr(__VA_ARGS__)
-#define EC_GROUP_get0_generator(...) EC_GROUP_get0_generator_ptr(__VA_ARGS__)
-#define EC_GROUP_get0_seed(...) EC_GROUP_get0_seed_ptr(__VA_ARGS__)
-#define EC_GROUP_get_cofactor(...) EC_GROUP_get_cofactor_ptr(__VA_ARGS__)
-#define EC_GROUP_get_curve_GF2m(...) EC_GROUP_get_curve_GF2m_ptr(__VA_ARGS__)
-#define EC_GROUP_get_curve_GFp(...) EC_GROUP_get_curve_GFp_ptr(__VA_ARGS__)
-#define EC_GROUP_get_curve_name(...) EC_GROUP_get_curve_name_ptr(__VA_ARGS__)
-#define EC_GROUP_get_degree(...) EC_GROUP_get_degree_ptr(__VA_ARGS__)
-#define EC_GROUP_get_order(...) EC_GROUP_get_order_ptr(__VA_ARGS__)
-#define EC_GROUP_get_seed_len(...) EC_GROUP_get_seed_len_ptr(__VA_ARGS__)
-#define EC_GROUP_method_of(...) EC_GROUP_method_of_ptr(__VA_ARGS__)
-#define EC_GROUP_new(...) EC_GROUP_new_ptr(__VA_ARGS__)
-#define EC_GROUP_set_curve_GF2m(...) EC_GROUP_set_curve_GF2m_ptr(__VA_ARGS__)
-#define EC_GROUP_set_curve_GFp(...) EC_GROUP_set_curve_GFp_ptr(__VA_ARGS__)
-#define EC_GROUP_set_generator(...) EC_GROUP_set_generator_ptr(__VA_ARGS__)
-#define EC_GROUP_set_seed(...) EC_GROUP_set_seed_ptr(__VA_ARGS__)
-#define EC_KEY_check_key(...) EC_KEY_check_key_ptr(__VA_ARGS__)
-#define EC_KEY_free(...) EC_KEY_free_ptr(__VA_ARGS__)
-#define EC_KEY_generate_key(...) EC_KEY_generate_key_ptr(__VA_ARGS__)
-#define EC_KEY_get0_group(...) EC_KEY_get0_group_ptr(__VA_ARGS__)
-#define EC_KEY_get0_private_key(...) EC_KEY_get0_private_key_ptr(__VA_ARGS__)
-#define EC_KEY_get0_public_key(...) EC_KEY_get0_public_key_ptr(__VA_ARGS__)
-#define EC_KEY_new(...) EC_KEY_new_ptr(__VA_ARGS__)
-#define EC_KEY_new_by_curve_name(...) EC_KEY_new_by_curve_name_ptr(__VA_ARGS__)
-#define EC_KEY_set_group(...) EC_KEY_set_group_ptr(__VA_ARGS__)
-#define EC_KEY_set_private_key(...) EC_KEY_set_private_key_ptr(__VA_ARGS__)
-#define EC_KEY_set_public_key_affine_coordinates(...) EC_KEY_set_public_key_affine_coordinates_ptr(__VA_ARGS__)
-#define EC_KEY_up_ref(...) EC_KEY_up_ref_ptr(__VA_ARGS__)
-#define EC_METHOD_get_field_type(...) EC_METHOD_get_field_type_ptr(__VA_ARGS__)
-#define EC_POINT_free(...) EC_POINT_free_ptr(__VA_ARGS__)
-#define EC_POINT_get_affine_coordinates_GF2m(...) EC_POINT_get_affine_coordinates_GF2m_ptr(__VA_ARGS__)
-#define EC_POINT_get_affine_coordinates_GFp(...) EC_POINT_get_affine_coordinates_GFp_ptr(__VA_ARGS__)
-#define EC_POINT_new(...) EC_POINT_new_ptr(__VA_ARGS__)
-#define EC_POINT_set_affine_coordinates_GF2m(...) EC_POINT_set_affine_coordinates_GF2m_ptr(__VA_ARGS__)
-#define EC_POINT_set_affine_coordinates_GFp(...) EC_POINT_set_affine_coordinates_GFp_ptr(__VA_ARGS__)
-#define ERR_clear_error(...) ERR_clear_error_ptr(__VA_ARGS__)
-#define ERR_error_string_n(...) ERR_error_string_n_ptr(__VA_ARGS__)
-#define ERR_get_error(...) ERR_get_error_ptr(__VA_ARGS__)
-#define ERR_load_crypto_strings(...) ERR_load_crypto_strings_ptr(__VA_ARGS__)
-#define ERR_peek_error(...) ERR_peek_error_ptr(__VA_ARGS__)
-#define ERR_peek_last_error(...) ERR_peek_last_error_ptr(__VA_ARGS__)
-#define ERR_reason_error_string(...) ERR_reason_error_string_ptr(__VA_ARGS__)
-#define EVP_aes_128_cbc(...) EVP_aes_128_cbc_ptr(__VA_ARGS__)
-#define EVP_aes_128_ecb(...) EVP_aes_128_ecb_ptr(__VA_ARGS__)
-#define EVP_aes_192_cbc(...) EVP_aes_192_cbc_ptr(__VA_ARGS__)
-#define EVP_aes_192_ecb(...) EVP_aes_192_ecb_ptr(__VA_ARGS__)
-#define EVP_aes_256_cbc(...) EVP_aes_256_cbc_ptr(__VA_ARGS__)
-#define EVP_aes_256_ecb(...) EVP_aes_256_ecb_ptr(__VA_ARGS__)
-#define EVP_CIPHER_CTX_cleanup(...) EVP_CIPHER_CTX_cleanup_ptr(__VA_ARGS__)
-#define EVP_CIPHER_CTX_ctrl(...) EVP_CIPHER_CTX_ctrl_ptr(__VA_ARGS__)
-#define EVP_CIPHER_CTX_init(...) EVP_CIPHER_CTX_init_ptr(__VA_ARGS__)
-#define EVP_CIPHER_CTX_set_key_length(...) EVP_CIPHER_CTX_set_key_length_ptr(__VA_ARGS__)
-#define EVP_CIPHER_CTX_set_padding(...) EVP_CIPHER_CTX_set_padding_ptr(__VA_ARGS__)
-#define EVP_CipherFinal_ex(...) EVP_CipherFinal_ex_ptr(__VA_ARGS__)
-#define EVP_CipherInit_ex(...) EVP_CipherInit_ex_ptr(__VA_ARGS__)
-#define EVP_CipherUpdate(...) EVP_CipherUpdate_ptr(__VA_ARGS__)
-#define EVP_des_cbc(...) EVP_des_cbc_ptr(__VA_ARGS__)
-#define EVP_des_ecb(...) EVP_des_ecb_ptr(__VA_ARGS__)
-#define EVP_des_ede3(...) EVP_des_ede3_ptr(__VA_ARGS__)
-#define EVP_des_ede3_cbc(...) EVP_des_ede3_cbc_ptr(__VA_ARGS__)
-#define EVP_DigestFinal_ex(...) EVP_DigestFinal_ex_ptr(__VA_ARGS__)
-#define EVP_DigestInit_ex(...) EVP_DigestInit_ex_ptr(__VA_ARGS__)
-#define EVP_DigestUpdate(...) EVP_DigestUpdate_ptr(__VA_ARGS__)
-#define EVP_md5(...) EVP_md5_ptr(__VA_ARGS__)
-#define EVP_MD_CTX_create(...) EVP_MD_CTX_create_ptr(__VA_ARGS__)
-#define EVP_MD_CTX_destroy(...) EVP_MD_CTX_destroy_ptr(__VA_ARGS__)
-#define EVP_MD_size(...) EVP_MD_size_ptr(__VA_ARGS__)
-#define EVP_PKEY_free(...) EVP_PKEY_free_ptr(__VA_ARGS__)
-#define EVP_PKEY_get1_DSA(...) EVP_PKEY_get1_DSA_ptr(__VA_ARGS__)
-#define EVP_PKEY_get1_EC_KEY(...) EVP_PKEY_get1_EC_KEY_ptr(__VA_ARGS__)
-#define EVP_PKEY_get1_RSA(...) EVP_PKEY_get1_RSA_ptr(__VA_ARGS__)
-#define EVP_PKEY_new(...) EVP_PKEY_new_ptr(__VA_ARGS__)
-#define EVP_PKEY_set1_DSA(...) EVP_PKEY_set1_DSA_ptr(__VA_ARGS__)
-#define EVP_PKEY_set1_EC_KEY(...) EVP_PKEY_set1_EC_KEY_ptr(__VA_ARGS__)
-#define EVP_PKEY_set1_RSA(...) EVP_PKEY_set1_RSA_ptr(__VA_ARGS__)
-#define EVP_rc2_cbc(...) EVP_rc2_cbc_ptr(__VA_ARGS__)
-#define EVP_rc2_ecb(...) EVP_rc2_ecb_ptr(__VA_ARGS__)
-#define EVP_sha1(...) EVP_sha1_ptr(__VA_ARGS__)
-#define EVP_sha256(...) EVP_sha256_ptr(__VA_ARGS__)
-#define EVP_sha384(...) EVP_sha384_ptr(__VA_ARGS__)
-#define EVP_sha512(...) EVP_sha512_ptr(__VA_ARGS__)
-#define EXTENDED_KEY_USAGE_free(...) EXTENDED_KEY_USAGE_free_ptr(__VA_ARGS__)
-#define GENERAL_NAMES_free(...) GENERAL_NAMES_free_ptr(__VA_ARGS__)
-#define HMAC_CTX_cleanup(...) HMAC_CTX_cleanup_ptr(__VA_ARGS__)
-#define HMAC_CTX_init(...) HMAC_CTX_init_ptr(__VA_ARGS__)
-#define HMAC_Final(...) HMAC_Final_ptr(__VA_ARGS__)
-#define HMAC_Init_ex(...) HMAC_Init_ex_ptr(__VA_ARGS__)
-#define HMAC_Update(...) HMAC_Update_ptr(__VA_ARGS__)
-#define i2d_ASN1_INTEGER(...) i2d_ASN1_INTEGER_ptr(__VA_ARGS__)
-#define i2d_ASN1_TYPE(...) i2d_ASN1_TYPE_ptr(__VA_ARGS__)
-#define i2d_PKCS12(...) i2d_PKCS12_ptr(__VA_ARGS__)
-#define i2d_PKCS7(...) i2d_PKCS7_ptr(__VA_ARGS__)
-#define i2d_X509(...) i2d_X509_ptr(__VA_ARGS__)
-#define i2d_X509_PUBKEY(...) i2d_X509_PUBKEY_ptr(__VA_ARGS__)
-#define OBJ_ln2nid(...) OBJ_ln2nid_ptr(__VA_ARGS__)
-#define OBJ_nid2ln(...) OBJ_nid2ln_ptr(__VA_ARGS__)
-#define OBJ_nid2obj(...) OBJ_nid2obj_ptr(__VA_ARGS__)
-#define OBJ_obj2nid(...) OBJ_obj2nid_ptr(__VA_ARGS__)
-#define OBJ_obj2txt(...) OBJ_obj2txt_ptr(__VA_ARGS__)
-#define OBJ_sn2nid(...) OBJ_sn2nid_ptr(__VA_ARGS__)
-#define OBJ_txt2nid(...) OBJ_txt2nid_ptr(__VA_ARGS__)
-#define OBJ_txt2obj(...) OBJ_txt2obj_ptr(__VA_ARGS__)
-#define OPENSSL_add_all_algorithms_conf(...) OPENSSL_add_all_algorithms_conf_ptr(__VA_ARGS__)
-#define PEM_read_bio_PKCS7(...) PEM_read_bio_PKCS7_ptr(__VA_ARGS__)
-#define PEM_read_bio_X509_AUX(...) PEM_read_bio_X509_AUX_ptr(__VA_ARGS__)
-#define PEM_read_bio_X509_CRL(...) PEM_read_bio_X509_CRL_ptr(__VA_ARGS__)
-#define PEM_write_bio_X509_CRL(...) PEM_write_bio_X509_CRL_ptr(__VA_ARGS__)
-#define PKCS12_create(...) PKCS12_create_ptr(__VA_ARGS__)
-#define PKCS12_free(...) PKCS12_free_ptr(__VA_ARGS__)
-#define PKCS12_parse(...) PKCS12_parse_ptr(__VA_ARGS__)
-#define PKCS7_add_certificate(...) PKCS7_add_certificate_ptr(__VA_ARGS__)
-#define PKCS7_content_new(...) PKCS7_content_new_ptr(__VA_ARGS__)
-#define PKCS7_free(...) PKCS7_free_ptr(__VA_ARGS__)
-#define PKCS7_new(...) PKCS7_new_ptr(__VA_ARGS__)
-#define PKCS7_set_type(...) PKCS7_set_type_ptr(__VA_ARGS__)
-#define RAND_bytes(...) RAND_bytes_ptr(__VA_ARGS__)
-#define RAND_poll(...) RAND_poll_ptr(__VA_ARGS__)
-#define RSA_free(...) RSA_free_ptr(__VA_ARGS__)
-#define RSA_generate_key_ex(...) RSA_generate_key_ex_ptr(__VA_ARGS__)
-#define RSA_new(...) RSA_new_ptr(__VA_ARGS__)
-#define RSA_private_decrypt(...) RSA_private_decrypt_ptr(__VA_ARGS__)
-#define RSA_public_encrypt(...) RSA_public_encrypt_ptr(__VA_ARGS__)
-#define RSA_sign(...) RSA_sign_ptr(__VA_ARGS__)
-#define RSA_size(...) RSA_size_ptr(__VA_ARGS__)
-#define RSA_up_ref(...) RSA_up_ref_ptr(__VA_ARGS__)
-#define RSA_verify(...) RSA_verify_ptr(__VA_ARGS__)
-#define sk_free(...) sk_free_ptr(__VA_ARGS__)
-#define sk_new_null(...) sk_new_null_ptr(__VA_ARGS__)
-#define sk_num(...) sk_num_ptr(__VA_ARGS__)
-#define sk_pop_free(...) sk_pop_free_ptr(__VA_ARGS__)
-#define sk_push(...) sk_push_ptr(__VA_ARGS__)
-#define sk_value(...) sk_value_ptr(__VA_ARGS__)
-#define SSL_CIPHER_description(...) SSL_CIPHER_description_ptr(__VA_ARGS__)
-#define SSL_ctrl(...) SSL_ctrl_ptr(__VA_ARGS__)
-#define SSL_CTX_check_private_key(...) SSL_CTX_check_private_key_ptr(__VA_ARGS__)
-#define SSL_CTX_ctrl(...) SSL_CTX_ctrl_ptr(__VA_ARGS__)
-#define SSL_CTX_free(...) SSL_CTX_free_ptr(__VA_ARGS__)
-#define SSL_CTX_new(...) SSL_CTX_new_ptr(__VA_ARGS__)
-#define SSL_CTX_set_cert_verify_callback(...) SSL_CTX_set_cert_verify_callback_ptr(__VA_ARGS__)
-#define SSL_CTX_set_cipher_list(...) SSL_CTX_set_cipher_list_ptr(__VA_ARGS__)
-#define SSL_CTX_set_client_CA_list(...) SSL_CTX_set_client_CA_list_ptr(__VA_ARGS__)
-#define SSL_CTX_set_client_cert_cb(...) SSL_CTX_set_client_cert_cb_ptr(__VA_ARGS__)
-#define SSL_CTX_set_quiet_shutdown(...) SSL_CTX_set_quiet_shutdown_ptr(__VA_ARGS__)
-#define SSL_CTX_set_verify(...) SSL_CTX_set_verify_ptr(__VA_ARGS__)
-#define SSL_CTX_use_certificate(...) SSL_CTX_use_certificate_ptr(__VA_ARGS__)
-#define SSL_CTX_use_PrivateKey(...) SSL_CTX_use_PrivateKey_ptr(__VA_ARGS__)
-#define SSL_do_handshake(...) SSL_do_handshake_ptr(__VA_ARGS__)
-#define SSL_free(...) SSL_free_ptr(__VA_ARGS__)
-#define SSL_get_client_CA_list(...) SSL_get_client_CA_list_ptr(__VA_ARGS__)
-#define SSL_get_current_cipher(...) SSL_get_current_cipher_ptr(__VA_ARGS__)
-#define SSL_get_error(...) SSL_get_error_ptr(__VA_ARGS__)
-#define SSL_get_finished(...) SSL_get_finished_ptr(__VA_ARGS__)
-#define SSL_get_peer_cert_chain(...) SSL_get_peer_cert_chain_ptr(__VA_ARGS__)
-#define SSL_get_peer_certificate(...) SSL_get_peer_certificate_ptr(__VA_ARGS__)
-#define SSL_get_peer_finished(...) SSL_get_peer_finished_ptr(__VA_ARGS__)
-#define SSL_get_SSL_CTX(...) SSL_get_SSL_CTX_ptr(__VA_ARGS__)
-#define SSL_get_version(...) SSL_get_version_ptr(__VA_ARGS__)
-#define SSL_library_init(...) SSL_library_init_ptr(__VA_ARGS__)
-#define SSL_load_error_strings(...) SSL_load_error_strings_ptr(__VA_ARGS__)
-#define SSL_new(...) SSL_new_ptr(__VA_ARGS__)
-#define SSL_read(...) SSL_read_ptr(__VA_ARGS__)
-#define SSL_renegotiate_pending(...) SSL_renegotiate_pending_ptr(__VA_ARGS__)
-#define SSL_set_accept_state(...) SSL_set_accept_state_ptr(__VA_ARGS__)
-#define SSL_set_bio(...) SSL_set_bio_ptr(__VA_ARGS__)
-#define SSL_set_connect_state(...) SSL_set_connect_state_ptr(__VA_ARGS__)
-#define SSL_shutdown(...) SSL_shutdown_ptr(__VA_ARGS__)
-#define SSL_state(...) SSL_state_ptr(__VA_ARGS__)
-#define SSLv23_method(...) SSLv23_method_ptr(__VA_ARGS__)
-#define SSLv3_method(...) SSLv3_method_ptr(__VA_ARGS__)
-#define SSL_write(...) SSL_write_ptr(__VA_ARGS__)
-#define TLSv1_1_method(...) TLSv1_1_method_ptr(__VA_ARGS__)
-#define TLSv1_2_method(...) TLSv1_2_method_ptr(__VA_ARGS__)
-#define TLSv1_method(...) TLSv1_method_ptr(__VA_ARGS__)
-#define X509_check_issued(...) X509_check_issued_ptr(__VA_ARGS__)
-#define X509_check_purpose(...) X509_check_purpose_ptr(__VA_ARGS__)
-#define X509_CRL_free(...) X509_CRL_free_ptr(__VA_ARGS__)
-#define X509_dup(...) X509_dup_ptr(__VA_ARGS__)
-#define X509_EXTENSION_create_by_OBJ(...) X509_EXTENSION_create_by_OBJ_ptr(__VA_ARGS__)
-#define X509_EXTENSION_free(...) X509_EXTENSION_free_ptr(__VA_ARGS__)
-#define X509_EXTENSION_get_critical(...) X509_EXTENSION_get_critical_ptr(__VA_ARGS__)
-#define X509_EXTENSION_get_data(...) X509_EXTENSION_get_data_ptr(__VA_ARGS__)
-#define X509_EXTENSION_get_object(...) X509_EXTENSION_get_object_ptr(__VA_ARGS__)
-#define X509_free(...) X509_free_ptr(__VA_ARGS__)
-#define X509_get_default_cert_dir(...) X509_get_default_cert_dir_ptr(__VA_ARGS__)
-#define X509_get_default_cert_dir_env(...) X509_get_default_cert_dir_env_ptr(__VA_ARGS__)
-#define X509_get_default_cert_file(...) X509_get_default_cert_file_ptr(__VA_ARGS__)
-#define X509_get_default_cert_file_env(...) X509_get_default_cert_file_env_ptr(__VA_ARGS__)
-#define X509_get_ext(...) X509_get_ext_ptr(__VA_ARGS__)
-#define X509_get_ext_count(...) X509_get_ext_count_ptr(__VA_ARGS__)
-#define X509_get_ext_d2i(...) X509_get_ext_d2i_ptr(__VA_ARGS__)
-#define X509_get_issuer_name(...) X509_get_issuer_name_ptr(__VA_ARGS__)
-#define X509_get_serialNumber(...) X509_get_serialNumber_ptr(__VA_ARGS__)
-#define X509_get_subject_name(...) X509_get_subject_name_ptr(__VA_ARGS__)
-#define X509_issuer_name_hash(...) X509_issuer_name_hash_ptr(__VA_ARGS__)
-#define X509_NAME_dup(...) X509_NAME_dup_ptr(__VA_ARGS__)
-#define X509_NAME_entry_count(...) X509_NAME_entry_count_ptr(__VA_ARGS__)
-#define X509_NAME_ENTRY_get_data(...) X509_NAME_ENTRY_get_data_ptr(__VA_ARGS__)
-#define X509_NAME_ENTRY_get_object(...) X509_NAME_ENTRY_get_object_ptr(__VA_ARGS__)
-#define X509_NAME_free(...) X509_NAME_free_ptr(__VA_ARGS__)
-#define X509_NAME_get_entry(...) X509_NAME_get_entry_ptr(__VA_ARGS__)
-#define X509_NAME_get_index_by_NID(...) X509_NAME_get_index_by_NID_ptr(__VA_ARGS__)
-#define X509_PUBKEY_get(...) X509_PUBKEY_get_ptr(__VA_ARGS__)
-#define X509_STORE_add_cert(...) X509_STORE_add_cert_ptr(__VA_ARGS__)
-#define X509_STORE_add_crl(...) X509_STORE_add_crl_ptr(__VA_ARGS__)
-#define X509_STORE_CTX_free(...) X509_STORE_CTX_free_ptr(__VA_ARGS__)
-#define X509_STORE_CTX_get0_param(...) X509_STORE_CTX_get0_param_ptr(__VA_ARGS__)
-#define X509_STORE_CTX_get1_chain(...) X509_STORE_CTX_get1_chain_ptr(__VA_ARGS__)
-#define X509_STORE_CTX_get_error(...) X509_STORE_CTX_get_error_ptr(__VA_ARGS__)
-#define X509_STORE_CTX_get_error_depth(...) X509_STORE_CTX_get_error_depth_ptr(__VA_ARGS__)
-#define X509_STORE_CTX_init(...) X509_STORE_CTX_init_ptr(__VA_ARGS__)
-#define X509_STORE_CTX_new(...) X509_STORE_CTX_new_ptr(__VA_ARGS__)
-#define X509_STORE_CTX_set_verify_cb(...) X509_STORE_CTX_set_verify_cb_ptr(__VA_ARGS__)
-#define X509_STORE_free(...) X509_STORE_free_ptr(__VA_ARGS__)
-#define X509_STORE_new(...) X509_STORE_new_ptr(__VA_ARGS__)
-#define X509_STORE_set_flags(...) X509_STORE_set_flags_ptr(__VA_ARGS__)
-#define X509V3_EXT_print(...) X509V3_EXT_print_ptr(__VA_ARGS__)
-#define X509_verify_cert(...) X509_verify_cert_ptr(__VA_ARGS__)
-#define X509_verify_cert_error_string(...) X509_verify_cert_error_string_ptr(__VA_ARGS__)
-#define X509_VERIFY_PARAM_set_time(...) X509_VERIFY_PARAM_set_time_ptr(__VA_ARGS__)
-#else
 
+// Redefine all libssl function names so that the code in System.Security.Cryptography.Native.so
+// calls them through the pointers
 #define ASN1_BIT_STRING_free ASN1_BIT_STRING_free_ptr
 #define ASN1_INTEGER_get ASN1_INTEGER_get_ptr
 #define ASN1_OBJECT_free ASN1_OBJECT_free_ptr
@@ -869,6 +600,6 @@ FOR_ALL_FUNCTIONS
 #define X509_verify_cert_error_string X509_verify_cert_error_string_ptr
 #define X509_VERIFY_PARAM_set_time X509_VERIFY_PARAM_set_time_ptr
 
-#endif
+#endif // FEATURE_PORTABLE
 
 #endif // __SHIM_H__
