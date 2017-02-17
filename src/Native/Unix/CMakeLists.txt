@@ -231,6 +231,12 @@ endfunction()
 
 include(configure.cmake)
 
+set(FEATURE_STANDALONE_PACKAGE 1)
+
+if (FEATURE_STANDALONE_PACKAGE)
+    add_definitions(-DFEATURE_STANDALONE_PACKAGE)
+endif()
+
 add_subdirectory(System.IO.Compression.Native)
 add_subdirectory(System.Native)
 add_subdirectory(System.Net.Http.Native)

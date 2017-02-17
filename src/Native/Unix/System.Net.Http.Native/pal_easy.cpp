@@ -4,6 +4,7 @@
 
 #include "pal_config.h"
 #include "pal_easy.h"
+#include "pal_curlinit.h"
 
 #include <assert.h>
 #include <memory>
@@ -37,6 +38,8 @@ static_assert(PAL_CURLOPT_PROXYUSERPWD == CURLOPT_PROXYUSERPWD, "");
 static_assert(PAL_CURLOPT_COOKIE == CURLOPT_COOKIE, "");
 static_assert(PAL_CURLOPT_HTTPHEADER == CURLOPT_HTTPHEADER, "");
 static_assert(PAL_CURLOPT_CUSTOMREQUEST == CURLOPT_CUSTOMREQUEST, "");
+static_assert(PAL_CURLOPT_CAINFO == CURLOPT_CAINFO, "");
+static_assert(PAL_CURLOPT_CAPATH == CURLOPT_CAPATH, "");
 static_assert(PAL_CURLOPT_ACCEPT_ENCODING == CURLOPT_ACCEPT_ENCODING, "");
 static_assert(PAL_CURLOPT_PRIVATE == CURLOPT_PRIVATE, "");
 static_assert(PAL_CURLOPT_COPYPOSTFIELDS == CURLOPT_COPYPOSTFIELDS, "");
@@ -106,7 +109,22 @@ static_assert(PAL_CURL_MAX_HTTP_HEADER == CURL_MAX_HTTP_HEADER, "");
 
 extern "C" CURL* HttpNative_EasyCreate()
 {
-    return curl_easy_init();
+    CURL *curl = curl_easy_init();
+
+#ifdef FEATURE_STANDALONE_PACKAGE
+    if (caStorage == CAStorage::BundleFile)
+    {
+        curl_easy_setopt(curl, CURLOPT_CAPATH, nullptr);
+        curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/pki/tls/certs/ca-bundle.crt");
+    }
+    else
+    {
+        curl_easy_setopt(curl, CURLOPT_CAPATH, "/etc/ssl/certs");
+        curl_easy_setopt(curl, CURLOPT_CAINFO, nullptr);
+    }
+#endif // FEATURE_STANDALONE_PACKAGE
+
+    return curl;
 }
 
 extern "C" void HttpNative_EasyDestroy(CURL* handle)

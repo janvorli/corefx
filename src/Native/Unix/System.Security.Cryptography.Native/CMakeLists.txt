@@ -48,6 +48,10 @@ if (FEATURE_DISTRO_AGNOSTIC_SSL)
         message(FATAL_ERROR "FEATURE_DISTRO_AGNOSTIC_SSL can only be enabled for Linux")
     endif()
 
+    if (FEATURE_STANDALONE_PACKAGE)
+        message(FATAL_ERROR "FEATURE_DISTRO_AGNOSTIC_SSL doesn't make sense when FEATURE_STANDALONE_PACKAGE is enabled")
+    endif()
+
     list(APPEND NATIVECRYPTO_SOURCES
         opensslshim.cpp
     )

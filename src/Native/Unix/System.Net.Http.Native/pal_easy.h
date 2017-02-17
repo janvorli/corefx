@@ -46,6 +46,8 @@ enum PAL_CURLoption : int32_t
     PAL_CURLOPT_COOKIE = CurlOptionObjectPointBase + 22,
     PAL_CURLOPT_HTTPHEADER = CurlOptionObjectPointBase + 23,
     PAL_CURLOPT_CUSTOMREQUEST = CurlOptionObjectPointBase + 36,
+    PAL_CURLOPT_CAINFO = CurlOptionObjectPointBase + 65,
+    PAL_CURLOPT_CAPATH = CurlOptionObjectPointBase + 97,
     PAL_CURLOPT_ACCEPT_ENCODING = CurlOptionObjectPointBase + 102,
     PAL_CURLOPT_PRIVATE = CurlOptionObjectPointBase + 103,
     PAL_CURLOPT_COPYPOSTFIELDS = CurlOptionObjectPointBase + 165,

@@ -6,6 +6,17 @@
 
 #include "pal_types.h"
 
+#ifdef FEATURE_STANDALONE_PACKAGE
+enum class CAStorage
+{
+    Unknown,
+    BundleFile,
+    Directory
+};
+
+extern CAStorage caStorage;
+#endif // FEATURE_STANDALONE_PACKAGE
+
 /**
  * Initializes curl.
  *

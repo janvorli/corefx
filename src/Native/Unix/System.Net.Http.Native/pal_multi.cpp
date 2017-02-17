@@ -5,6 +5,7 @@
 #include "pal_config.h"
 #include "pal_multi.h"
 #include "pal_utilities.h"
+#include "pal_curlinit.h"
 
 #include <assert.h>
 #include <poll.h>
@@ -32,7 +33,22 @@ static_assert(PAL_CURLMSG_DONE == CURLMSG_DONE, "");
 
 extern "C" CURLM* HttpNative_MultiCreate()
 {
-    return curl_multi_init();
+    CURLM* curl = curl_multi_init();
+
+#ifdef FEATURE_STANDALONE_PACKAGE
+    if (caStorage == CAStorage::BundleFile)
+    {
+        curl_easy_setopt(curl, CURLOPT_CAPATH, nullptr);
+        curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/pki/tls/certs/ca-bundle.crt");
+    }
+    else
+    {
+        curl_easy_setopt(curl, CURLOPT_CAPATH, "/etc/ssl/certs");
+        curl_easy_setopt(curl, CURLOPT_CAINFO, nullptr);
+    }
+#endif // FEATURE_STANDALONE_PACKAGE
+
+    return curl;
 }
 
 extern "C" int32_t HttpNative_MultiDestroy(CURLM* multiHandle)
