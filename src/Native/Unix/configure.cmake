@@ -594,6 +594,9 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL Linux)
     message(FATAL_ERROR "Cannot find inotify functions on a Linux platform.")
 endif()
 
+set(CMAKE_REQUIRED_INCLUDES "/home/janvorli/git/corefx/bin/Linux.x64.Debug/ThirdParty/include")
+set(CMAKE_REQUIRED_LIBRARIES "/home/janvorli/git/corefx/bin/Linux.x64.Debug/ThirdParty/lib/libcurl.a")
+
 check_cxx_source_compiles(
     "
     #include <curl/multi.h>

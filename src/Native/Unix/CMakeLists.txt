@@ -233,6 +233,8 @@ function(install_library_and_symbols targetName)
     endif()
 endfunction()
 
+add_subdirectory(ThirdParty)
+
 include(configure.cmake)
 
 add_subdirectory(System.IO.Compression.Native)

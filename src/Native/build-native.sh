@@ -129,8 +129,8 @@ build_native()
 copy_to_vertical_runtime()
 {
     echo "Copying native shims to vertical runtime folder."
-    cp $__BinDir/* "$__RuntimePath"
-    cp $__BinDir/* "$__TestSharedFrameworkPath"
+    cp $__BinDir/*.* "$__RuntimePath"
+    cp $__BinDir/*.* "$__TestSharedFrameworkPath"
 }
 
 __scriptpath=$(cd "$(dirname "$0")"; pwd -P)

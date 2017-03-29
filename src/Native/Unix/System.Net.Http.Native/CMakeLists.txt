@@ -1,19 +1,11 @@
 project(System.Net.Http.Native)
-
-find_package(CURL)
-if(NOT CURL_FOUND)
-    message(FATAL_ERROR "!!! Cannot find libcurl and System.Net.Http.Native cannot build without it. Try installing libcurl4-openssl-dev (or the appropriate package for your platform) !!!")
-endif(NOT CURL_FOUND)
-
+set(CMAKE_INSTALL_RPATH "\$ORIGIN")
 if(CMAKE_STATIC_LIB_LINK)
-    find_library(CURL_STATIC_LIB NAMES libcurl.a)
-    if(NOT CURL_STATIC_LIB)
-        message(FATAL_ERROR "!!! Cannot find libcurl static lib and System.Net.Http.Native cannot build without it. Try installing libcurl4-openssl-dev (or the appropriate package for your platform) !!!")
-    endif(NOT CURL_STATIC_LIB)
-    set(CURL_LIBRARIES ${CURL_STATIC_LIB})
+    set(CURL_LIBRARIES ${CMAKE_INSTALL_PREFIX}/ThirdParty/lib/libcurl.a)
     add_compile_options(-DCURL_STATICLIB)
+else()
+    set(CURL_LIBRARIES ${CMAKE_INSTALL_PREFIX}/ThirdParty/lib/libcurl.so)
 endif(CMAKE_STATIC_LIB_LINK)
-
 
 set(NATIVEHTTP_SOURCES
     pal_curlinit.cpp
@@ -23,13 +15,15 @@ set(NATIVEHTTP_SOURCES
     pal_versioninfo.cpp
 )
 
-include_directories(SYSTEM ${CURL_INCLUDE_DIR})
+include_directories(SYSTEM "${CMAKE_INSTALL_PREFIX}/ThirdParty/include")
 
 add_library(System.Net.Http.Native
     SHARED
     ${NATIVEHTTP_SOURCES}
     ${VERSION_FILE_PATH}
 )
+
+add_dependencies(System.Net.Http.Native curl)
 
 target_link_libraries(System.Net.Http.Native
   ${CURL_LIBRARIES}
