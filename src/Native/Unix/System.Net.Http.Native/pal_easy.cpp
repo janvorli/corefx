@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 #include "pal_config.h"
+#include "pal_curl_config.h"
 #include "pal_easy.h"
 
 #include <assert.h>

@@ -3,10 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 #include "pal_config.h"
+#include "pal_curl_config.h"
 #include "pal_versioninfo.h"
 
 #include <string.h>
-#include <curl/curl.h>
+#include "curlshim.h"
 
 static_assert(PAL_CURL_VERSION_IPV6 == CURL_VERSION_IPV6, "");
 static_assert(PAL_CURL_VERSION_KERBEROS4 == CURL_VERSION_KERBEROS4, "");

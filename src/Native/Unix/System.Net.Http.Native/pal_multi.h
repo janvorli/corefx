@@ -6,7 +6,7 @@
 
 #include "pal_types.h"
 
-#include <curl/curl.h>
+#include "curlshim.h"
 
 enum PAL_CURLMcode : int32_t
 {

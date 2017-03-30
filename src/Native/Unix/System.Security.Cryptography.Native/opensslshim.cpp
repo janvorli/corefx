@@ -8,7 +8,7 @@
 
 #include "opensslshim.h"
 
-// Define pointers to all the used ICU functions
+// Define pointers to all the used OpenSSL functions
 #define PER_FUNCTION_BLOCK(fn, isRequired) decltype(fn) fn##_ptr;
 FOR_ALL_OPENSSL_FUNCTIONS
 #undef PER_FUNCTION_BLOCK
@@ -37,7 +37,7 @@ void InitializeOpenSSLShim()
         abort();
     }
 
-    // Get pointers to all the ICU functions that are needed
+    // Get pointers to all the OpenSSL functions that are needed
 #define PER_FUNCTION_BLOCK(fn, isRequired) \
     fn##_ptr = reinterpret_cast<decltype(fn)>(dlsym(libssl, #fn)); \
     if ((fn##_ptr) == NULL && isRequired) { fprintf(stderr, "Cannot get required symbol " #fn " from libssl\n"); abort(); }

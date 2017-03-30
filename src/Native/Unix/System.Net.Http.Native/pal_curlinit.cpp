@@ -3,10 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 #include "pal_config.h"
+#include "pal_curl_config.h"
 #include "pal_curlinit.h"
 
 #include <pthread.h>
-#include <curl/curl.h>
+#include "curlshim.h"
 
 extern "C" int32_t HttpNative_EnsureCurlIsInitialized()
 {
