@@ -12,6 +12,8 @@
 // are overriden to be called through our function pointers.
 #include <curl/curl.h>
 
+#ifdef FEATURE_LOCAL_CURL
+
 // List of all functions from the libcurl that are used in the System.Net.Http.Native.
 // Forgetting to add a function here results in build failure with message reporting the function
 // that needs to be added.
@@ -69,3 +71,5 @@ FOR_ALL_CURL_FUNCTIONS
 #define curl_slist_append curl_slist_append_ptr
 #define curl_slist_free_all curl_slist_free_all_ptr
 #define curl_version_info curl_version_info_ptr
+
+#endif // FEATURE_LOCAL_CURL

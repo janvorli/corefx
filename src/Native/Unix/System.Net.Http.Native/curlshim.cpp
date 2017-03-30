@@ -16,8 +16,9 @@ FOR_ALL_CURL_FUNCTIONS
 #undef PER_FUNCTION_BLOCK
 
 static void* libssl = nullptr;
-static void* libcurl = nullptr;
-static void* libnghttp2 = nullptr;
+static void* libcoreclr_curl = nullptr;
+
+#define LIBCORECLR_CURL_FILENAME "libcoreclr_curl.so"
 
 bool OpenSSLLibrary()
 {
@@ -32,107 +33,70 @@ bool OpenSSLLibrary()
     return libssl != nullptr;
 }
 
-bool OpenNgHttp2Library()
+bool OpenCoreCLRCURLLibrary()
 {
     Dl_info dlInfo;
-    int st = dladdr(reinterpret_cast<void*>(OpenNgHttp2Library), &dlInfo);
+    int st = dladdr(reinterpret_cast<void*>(OpenCoreCLRCURLLibrary), &dlInfo);
     if (st == 0)
     {
-        fprintf(stderr, "\n");
-        abort();
+        return false;
     }
 
     if (dlInfo.dli_fname == nullptr)
     {
-        fprintf(stderr, "\n");
-        abort();
+        return false;
     }
 
     const char* lastSlash = strrchr(dlInfo.dli_fname, '/');
     if (lastSlash == nullptr)
     {
-        fprintf(stderr, "\n");
-        abort();
+        return false;
     }
 
     size_t pathLength = static_cast<size_t>(lastSlash - dlInfo.dli_fname + 1);
-    char* libcurlPath = reinterpret_cast<char*>(malloc(pathLength + sizeof("libnghttp2.so.14") + 1));
-    if (libcurlPath == nullptr)
-    {
-        fprintf(stderr, "\n");
-        abort();
-    }
-    strncpy(libcurlPath, dlInfo.dli_fname, pathLength);
-    strcpy(libcurlPath + pathLength, "libnghttp2.so.14");
-    libnghttp2 = dlopen(libcurlPath, RTLD_NOW | RTLD_GLOBAL);
-    free(libcurlPath);
+    char* localLibraryPath = reinterpret_cast<char*>(malloc(pathLength + sizeof(LIBCORECLR_CURL_FILENAME)));    
 
-    return libnghttp2 != nullptr;
-}
-
-bool OpenCURLLibrary()
-{
-    Dl_info dlInfo;
-    int st = dladdr(reinterpret_cast<void*>(OpenCURLLibrary), &dlInfo);
-    if (st == 0)
+    if (localLibraryPath == nullptr)
     {
-        fprintf(stderr, "\n");
-        abort();
+        return false;
     }
 
-    if (dlInfo.dli_fname == nullptr)
-    {
-        fprintf(stderr, "\n");
-        abort();
-    }
+    strncpy(localLibraryPath, dlInfo.dli_fname, pathLength);
+    char* libPath = localLibraryPath;
 
-    const char* lastSlash = strrchr(dlInfo.dli_fname, '/');
-    if (lastSlash == nullptr)
-    {
-        fprintf(stderr, "\n");
-        abort();
-    }
+    strcpy(libPath + pathLength, LIBCORECLR_CURL_FILENAME);
+    libcoreclr_curl = dlopen(libPath, RTLD_NOW);
 
-    size_t pathLength = static_cast<size_t>(lastSlash - dlInfo.dli_fname + 1);
-    char* libcurlPath = reinterpret_cast<char*>(malloc(pathLength + sizeof("libcurl.so.4") + 1));
-    if (libcurlPath == nullptr)
-    {
-        fprintf(stderr, "\n");
-        abort();
-    }
-    strncpy(libcurlPath, dlInfo.dli_fname, pathLength);
-    strcpy(libcurlPath + pathLength, "libcurl.so.4");
-    libcurl = dlopen(libcurlPath, RTLD_NOW);
-    free(libcurlPath);
+    free(libPath);
 
-    return libcurl != nullptr;
+    return libcoreclr_curl != nullptr;
 }
 
 __attribute__((constructor))
 void InitializeCURLShim()
 {
+    // We need to preload libssl and libnghttp2 before opening libcurl to ensure that
+    // it will get the right versions
+
+    // TODO: we should not preload the openssl library in case of non-portable build
+    // We should rather make the libcoreclr_curl.so explicitly depend on libssl in that case
+
     if (!OpenSSLLibrary())
     {
         fprintf(stderr, "No usable version of the libssl was found\n");
         abort();
     }
 
-    if (!OpenNgHttp2Library())
+    if (!OpenCoreCLRCURLLibrary())
     {
-        fprintf(stderr, "Local libnghttp2.so.14 not found\n");
-        abort();
-    }
-
-    if (!OpenCURLLibrary())
-    {
-        fprintf(stderr, "Local libcurl.so.4 not found\n");
+        fprintf(stderr, "Local " LIBCORECLR_CURL_FILENAME " not found\n");
         abort();
     }
 
     // Get pointers to all the CURL functions that are needed
 #define PER_FUNCTION_BLOCK(fn) \
-    fn##_ptr = reinterpret_cast<decltype(fn)>(dlsym(libcurl, #fn)); \
-    if ((fn##_ptr) == NULL) { fprintf(stderr, "Cannot get required symbol " #fn " from libcurl\n"); abort(); }
+    fn##_ptr = reinterpret_cast<decltype(fn)>(dlsym(libcoreclr_curl, #fn)); \
+    if ((fn##_ptr) == NULL) { fprintf(stderr, "Cannot get required symbol " #fn " from libcoreclr_curl\n"); abort(); }
 
     FOR_ALL_CURL_FUNCTIONS
 #undef PER_FUNCTION_BLOCK    
@@ -141,14 +105,9 @@ void InitializeCURLShim()
 __attribute__((destructor))
 void ShutdownCURLShim()
 {
-    if (libcurl != nullptr)
+    if (libcoreclr_curl != nullptr)
     {
-        dlclose(libcurl);
-    }
-
-    if (libnghttp2 != nullptr)
-    {
-        dlclose(libnghttp2);
+        dlclose(libcoreclr_curl);
     }
 
     if (libssl != nullptr)

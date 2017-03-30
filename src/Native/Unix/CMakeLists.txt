@@ -233,9 +233,36 @@ function(install_library_and_symbols targetName)
     endif()
 endfunction()
 
-add_subdirectory(ThirdParty)
-
 include(configure.cmake)
+
+if (HAVE_GSSFW_HEADERS)
+   find_library(LIBGSS NAMES GSS)
+   if(LIBGSS STREQUAL LIBGSS-NOTFOUND)
+      message(FATAL_ERROR "Cannot find GSS.Framework and coreclr_curl cannot build without it. Try installing GSS.Framework (or the appropriate package for your platform)")
+   endif()
+elseif(HAVE_HEIMDAL_HEADERS)
+   find_library(LIBGSS NAMES gssapi)
+   if(LIBGSS STREQUAL LIBGSS-NOTFOUND)
+      message(FATAL_ERROR "Cannot find libgssapi and coreclr_curl cannot build without it. Try installing heimdal (or the appropriate package for your platform)")
+   endif()
+elseif(HeimdalGssApi)
+     message(FATAL_ERROR "HeimdalGssApi option was set but gssapi headers could not be found and coreclr_curl cannot build without the headers. Try installing heimdal (or the appropriate package for your platform)")
+else()
+   find_library(LIBGSS NAMES gssapi_krb5)
+   if(LIBGSS STREQUAL LIBGSS-NOTFOUND)
+      message(FATAL_ERROR "Cannot find libgssapi_krb5 and coreclr_curl cannot build without it. Try installing libkrb5-dev (or the appropriate package for your platform)")
+   endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+    set(FEATURE_LOCAL_CURL 1)
+    add_definitions(-DFEATURE_LOCAL_CURL)
+
+    set(THIRD_PARTY_INSTALL_DIRECTORY ${CMAKE_INSTALL_PREFIX}/ThirdParty)
+
+    add_subdirectory(ThirdParty)
+    add_subdirectory(coreclr_curl)
+endif()
 
 add_subdirectory(System.IO.Compression.Native)
 add_subdirectory(System.Native)
