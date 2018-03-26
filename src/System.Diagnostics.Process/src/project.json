@@ -22,7 +22,7 @@
         "System.IO.FileSystem.Primitives": "4.0.0",
         "System.Collections": "4.0.10",
         "Microsoft.Win32.Primitives": "4.0.0",
-        "Microsoft.Win32.Registry": "4.0.0-rc3-24210-10"
+        "Microsoft.Win32.Registry": "4.0.0"
       },
       "imports": [
         "dotnet5.5"

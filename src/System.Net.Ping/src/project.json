@@ -6,7 +6,7 @@
         "Microsoft.Win32.Primitives": "4.0.0",
         "System.Collections": "4.0.10",
         "System.Diagnostics.Debug": "4.0.10",
-        "System.Diagnostics.Process": "4.1.0-rc3-24210-10",
+        "System.Diagnostics.Process": "4.1.0",
         "System.Diagnostics.Tracing": "4.0.20",
         "System.IO.FileSystem": "4.0.0",
         "System.Net.NameResolution": "4.0.0-rc3-24210-10",

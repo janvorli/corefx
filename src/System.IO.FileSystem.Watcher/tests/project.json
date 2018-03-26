@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "Microsoft.NETCore.Platforms": "1.0.1-rc3-24210-10",
-    "System.Diagnostics.Process": "4.1.0-rc3-24210-10",
+    "System.Diagnostics.Process": "4.1.0",
     "System.IO": "4.1.0-rc3-24210-10",
     "System.IO.FileSystem": "4.0.1-rc3-24210-10",
     "System.IO.FileSystem.Primitives": "4.0.1-rc3-24210-10",
