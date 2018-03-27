@@ -36,12 +36,26 @@
 
 #ifdef FEATURE_DISTRO_AGNOSTIC_SSL
 
+#if !HAVE_OPENSSL_EC2M
+// In portable build, we need to support the following functions even if they were not present
+// on the build OS. The shim will detect their presence at runtime.
+#undef HAVE_OPENSSL_EC2M
+#define HAVE_OPENSSL_EC2M 1
+const EC_METHOD *EC_GF2m_simple_method(void);
+int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
+int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
+        const EC_POINT *p, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
+int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group, EC_POINT *p,
+        const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
+#endif
+
 #define API_EXISTS(fn) (fn != nullptr)
 
 // List of all functions from the libssl that are used in the System.Security.Cryptography.Native.
 // Forgetting to add a function here results in build failure with message reporting the function
 // that needs to be added.
-#define FOR_ALL_UNCONDITIONAL_OPENSSL_FUNCTIONS \
+#define FOR_ALL_OPENSSL_FUNCTIONS \
     PER_FUNCTION_BLOCK(ASN1_BIT_STRING_free, true) \
     PER_FUNCTION_BLOCK(ASN1_INTEGER_get, true) \
     PER_FUNCTION_BLOCK(ASN1_OBJECT_free, true) \
@@ -87,6 +101,7 @@
     PER_FUNCTION_BLOCK(DSA_generate_key, true) \
     PER_FUNCTION_BLOCK(DSA_generate_parameters_ex, true) \
     PER_FUNCTION_BLOCK(DSA_new, true) \
+    PER_FUNCTION_BLOCK(DSA_OpenSSL, true) \
     PER_FUNCTION_BLOCK(DSA_sign, true) \
     PER_FUNCTION_BLOCK(DSA_size, true) \
     PER_FUNCTION_BLOCK(DSA_up_ref, true) \
@@ -132,6 +147,7 @@
     PER_FUNCTION_BLOCK(ERR_error_string_n, true) \
     PER_FUNCTION_BLOCK(ERR_get_error, true) \
     PER_FUNCTION_BLOCK(ERR_load_crypto_strings, true) \
+    PER_FUNCTION_BLOCK(ERR_put_error, true) \
     PER_FUNCTION_BLOCK(ERR_peek_error, true) \
     PER_FUNCTION_BLOCK(ERR_peek_last_error, true) \
     PER_FUNCTION_BLOCK(ERR_reason_error_string, true) \
@@ -313,22 +329,12 @@
     PER_FUNCTION_BLOCK(X509_verify_cert, true) \
     PER_FUNCTION_BLOCK(X509_verify_cert_error_string, true) \
     PER_FUNCTION_BLOCK(X509_VERIFY_PARAM_set_time, true) \
-
-#if HAVE_OPENSSL_EC2M
-#define FOR_ALL_OPENSSL_FUNCTIONS \
-    FOR_ALL_UNCONDITIONAL_OPENSSL_FUNCTIONS \
     PER_FUNCTION_BLOCK(EC_GF2m_simple_method, false) \
     PER_FUNCTION_BLOCK(EC_GROUP_get_curve_GF2m, false) \
     PER_FUNCTION_BLOCK(EC_GROUP_set_curve_GF2m, false) \
     PER_FUNCTION_BLOCK(EC_POINT_get_affine_coordinates_GF2m, false) \
     PER_FUNCTION_BLOCK(EC_POINT_set_affine_coordinates_GF2m, false) \
     
-#else // HAVE_OPENSSL_EC2M
-#define FOR_ALL_OPENSSL_FUNCTIONS \
-    FOR_ALL_UNCONDITIONAL_OPENSSL_FUNCTIONS
-
-#endif // HAVE_OPENSSL_EC2M
-
 // Declare pointers to all the used OpenSSL functions
 #define PER_FUNCTION_BLOCK(fn, isRequired) extern decltype(fn)* fn##_ptr;
 FOR_ALL_OPENSSL_FUNCTIONS
@@ -381,6 +387,7 @@ FOR_ALL_OPENSSL_FUNCTIONS
 #define DSA_generate_key DSA_generate_key_ptr
 #define DSA_generate_parameters_ex DSA_generate_parameters_ex_ptr
 #define DSA_new DSA_new_ptr
+#define DSA_OpenSSL DSA_OpenSSL_ptr
 #define DSA_sign DSA_sign_ptr
 #define DSA_size DSA_size_ptr
 #define DSA_up_ref DSA_up_ref_ptr
@@ -428,6 +435,7 @@ FOR_ALL_OPENSSL_FUNCTIONS
 #define ERR_load_crypto_strings ERR_load_crypto_strings_ptr
 #define ERR_peek_error ERR_peek_error_ptr
 #define ERR_peek_last_error ERR_peek_last_error_ptr
+#define ERR_put_error ERR_put_error_ptr
 #define ERR_reason_error_string ERR_reason_error_string_ptr
 #define EVP_aes_128_cbc EVP_aes_128_cbc_ptr
 #define EVP_aes_128_ecb EVP_aes_128_ecb_ptr
@@ -607,14 +615,11 @@ FOR_ALL_OPENSSL_FUNCTIONS
 #define X509_verify_cert X509_verify_cert_ptr
 #define X509_verify_cert_error_string X509_verify_cert_error_string_ptr
 #define X509_VERIFY_PARAM_set_time X509_VERIFY_PARAM_set_time_ptr
-
-#if HAVE_OPENSSL_EC2M
 #define EC_GF2m_simple_method EC_GF2m_simple_method_ptr
 #define EC_GROUP_get_curve_GF2m EC_GROUP_get_curve_GF2m_ptr
 #define EC_GROUP_set_curve_GF2m EC_GROUP_set_curve_GF2m_ptr
 #define EC_POINT_get_affine_coordinates_GF2m EC_POINT_get_affine_coordinates_GF2m_ptr
 #define EC_POINT_set_affine_coordinates_GF2m EC_POINT_set_affine_coordinates_GF2m_ptr
-#endif // HAVE_OPENSSL_EC2M
 
 #else // FEATURE_DISTRO_AGNOSTIC_SSL
 
