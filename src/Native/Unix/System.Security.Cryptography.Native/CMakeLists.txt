@@ -18,7 +18,7 @@ endif(CMAKE_STATIC_LIB_LINK)
 find_package(OpenSSL REQUIRED)
 
 set(NATIVECRYPTO_SOURCES
-    openssl.c
+    openssl.cpp
     pal_asn1.cpp
     pal_asn1_print.cpp
     pal_bignum.cpp
